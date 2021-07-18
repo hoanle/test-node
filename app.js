@@ -2,7 +2,9 @@ const express = require('express');
 const path = require('path');
 const app = express();
 const https = require('https');
+const http = require('http');
 const fs = require('fs');
+const ssl = false
 
 app.use(express.static(path.join(__dirname, 'build')));
 
@@ -12,17 +14,21 @@ app.get('/', function (req, res) {
 });
 
 app.set('port', 9000);
-const server = https.createServer({
-    key: fs.readFileSync(path.join(__dirname, "./localhost-key.pem")),
-    cert: fs.readFileSync(path.join(__dirname, "./localhost.pem"))
-  }, app);
 
+var server;
+
+if (ssl) {
+  server = https.createServer({
+      key: fs.readFileSync(path.join(__dirname, "./localhost-key.pem")),
+      cert: fs.readFileSync(path.join(__dirname, "./localhost.pem"))
+    }, app);
+} else {
+  server = https.createServer(app);
+}
 
 server.listen(9000);
 server.on('error', onError);
 server.on('listening',  onListening);
-
-console.log("aa");
 
 function onError(error) {
   console.log("error");
