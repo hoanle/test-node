@@ -1,39 +1,37 @@
-const express = require('express');
-const path = require('path');
-const app = express();
-const https = require('https');
-const http = require('http');
-const fs = require('fs');
-const ssl = false
+const express = require('express')
+const path = require('path')
+const https = require('https')
+const fs = require('fs')
+const WebSocket = require('ws')
 
-app.use(express.static(path.join(__dirname, 'build')));
+const app = express()
+app.use(express.static(path.join(__dirname, 'build')))
 
-app.get('/', function (req, res) {
-  console.log('get /');
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
-});
+app.get('/', (req, res) => {
+  const wss = new WebSocket.Server({ server, rejectUnauthorized: false })
+  wss.on('connection', (ws) => {
+    console.log('Connected!')
+    ws.on('message', (message) => {
+      console.log('Message: ', message)
+    })
+  })
 
-app.set('port', 9000);
+  res.redirect(`/sensr`)
+})
 
-var server;
+app.get('/sensr', function (req, res) {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'))
+})
 
-if (ssl) {
-  server = https.createServer({
-      key: fs.readFileSync(path.join(__dirname, "./localhost-key.pem")),
-      cert: fs.readFileSync(path.join(__dirname, "./localhost.pem"))
-    }, app);
-} else {
-  server = https.createServer(app);
-}
+app.set('port', 9000)
+const server = https.createServer(
+  {
+    key: fs.readFileSync(path.join(__dirname, './sensr-ca.key')),
+    cert: fs.readFileSync(path.join(__dirname, './sensr-ca.crt')),
+  },
+  app
+)
 
-server.listen(9000);
-server.on('error', onError);
-server.on('listening',  onListening);
-
-function onError(error) {
-  console.log("error");
-}
-
-function onListening() {
-  console.log("listening")
-}
+server.listen(9000)
+server.on('error', (error) => console.log('error', error))
+server.on('listening', () => console.log('listening'))
